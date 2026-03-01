@@ -133,18 +133,6 @@ export default function Projects() {
                 }}
                 className="opacity-0 translate-y-4 motion-reduce:opacity-100 motion-reduce:translate-y-0 will-change-transform"
               >
-                {project.image && (
-                  <div className="relative w-full aspect-[16/10] overflow-hidden bg-[var(--surface)]">
-                    <Image
-                      src={project.image}
-                      alt={`${project.title} preview`}
-                      fill
-                      className="object-cover transition-transform duration-200 ease-out hover:scale-[1.02]"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                    />
-                  </div>
-                )}
-
                 <div className="p-5 space-y-3">
                   <h3 className="text-lg font-medium text-[var(--text)]">
                     {project.title}

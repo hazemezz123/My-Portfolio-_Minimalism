@@ -222,6 +222,7 @@ export default function AdminPage() {
       uploadFormData.append("timestamp", String(timestamp));
       uploadFormData.append("signature", signature);
       uploadFormData.append("folder", folder);
+      uploadFormData.append("format", "webp");
 
       const uploadResponse = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
@@ -551,6 +552,7 @@ export default function AdminPage() {
                             fd.append("timestamp", String(timestamp));
                             fd.append("signature", signature);
                             fd.append("folder", folder);
+                            fd.append("format", "webp");
                             const uploadRes = await fetch(
                               `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
                               { method: "POST", body: fd },

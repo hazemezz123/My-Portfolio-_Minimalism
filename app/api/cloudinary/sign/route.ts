@@ -15,7 +15,7 @@ export async function POST() {
 
   const timestamp = Math.floor(Date.now() / 1000);
   const folder = "portfolio-projects";
-  const signatureBase = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+  const signatureBase = `folder=${folder}&format=webp&timestamp=${timestamp}${apiSecret}`;
   const signature = createHash("sha1").update(signatureBase).digest("hex");
 
   return NextResponse.json({
