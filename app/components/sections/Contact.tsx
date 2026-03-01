@@ -8,11 +8,7 @@ import Button from "../ui/Button";
 import { useFadeInOnScroll } from "../../hooks/useFadeInOnScroll";
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const contentRef = useRef<HTMLDivElement>(null);
@@ -24,16 +20,23 @@ export default function Contact() {
     setStatus("idle");
 
     try {
+      const formData = new FormData(e.currentTarget);
+      const data = {
+        from_name: formData.get("name") as string,
+        from_email: formData.get("email") as string,
+        message: formData.get("message") as string,
+      };
+
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) throw new Error("Failed to send");
 
       setStatus("success");
-      setFormData({ name: "", email: "", message: "" });
+      formRef.current?.reset();
     } catch {
       setStatus("error");
     } finally {
@@ -44,7 +47,11 @@ export default function Contact() {
   return (
     <Section id="contact">
       <Container>
-        <div ref={contentRef} className="max-w-lg mx-auto" style={{ opacity: 0 }}>
+        <div
+          ref={contentRef}
+          className="max-w-lg mx-auto"
+          style={{ opacity: 0 }}
+        >
           <Heading className="mb-4 text-center">Get in Touch</Heading>
           <p className="text-[var(--muted)] text-center mb-10">
             Have a project in mind or want to collaborate? Send me a message.
@@ -52,10 +59,10 @@ export default function Contact() {
 
           <div className="flex flex-wrap justify-center gap-6 text-sm text-[var(--text)] mb-10">
             <a
-              href="mailto:hazemezzeldeen@gmail.com"
+              href="mailto:hazemezz988@gmail.com"
               className="underline-offset-4 transition-colors duration-150 ease-out hover:underline"
             >
-              hazemezzeldeen@gmail.com
+              hazemezz988@gmail.com
             </a>
             <a
               href="https://www.linkedin.com/in/hazem-ezz-424498285/"
@@ -75,7 +82,7 @@ export default function Contact() {
             </a>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="name"
@@ -85,12 +92,9 @@ export default function Contact() {
               </label>
               <input
                 id="name"
+                name="name"
                 type="text"
                 required
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
                 placeholder="Your name"
               />
             </div>
@@ -104,12 +108,9 @@ export default function Contact() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
                 required
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
                 placeholder="you@example.com"
               />
             </div>
@@ -123,12 +124,9 @@ export default function Contact() {
               </label>
               <textarea
                 id="message"
+                name="message"
                 required
                 rows={5}
-                value={formData.message}
-                onChange={(e) =>
-                  setFormData({ ...formData, message: e.target.value })
-                }
                 placeholder="Your message..."
               />
             </div>
