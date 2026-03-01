@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getProjectsCollection } from "../lib/mongodb";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Projects | Hazem Ezz",
   description: "All projects by Hazem Ezz — full stack developer.",

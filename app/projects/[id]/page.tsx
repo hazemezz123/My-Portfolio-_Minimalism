@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getProjectsCollection, ObjectId } from "../../lib/mongodb";
 import Button from "../../components/ui/Button";
 
+export const dynamic = "force-dynamic";
+
 interface ProjectDetailsPageProps {
   params: Promise<{ id: string }>;
 }
