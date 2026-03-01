@@ -5,6 +5,7 @@ import { TypeAnimation } from "react-type-animation";
 import Container from "../ui/Container";
 import Button from "../ui/Button";
 import { useHeroAnimation } from "../../hooks/useHeroAnimation";
+import DarkVeil from "../ui/DarkVeil";
 
 export default function Hero() {
   const nameRef = useRef<HTMLHeadingElement>(null);
@@ -20,8 +21,21 @@ export default function Hero() {
   });
 
   return (
-    <section id="home" className="min-h-[85vh] flex items-center">
-      <Container>
+    <section
+      id="home"
+      className="relative min-h-[100vh] flex items-center overflow-hidden"
+    >
+      <div className="absolute inset-0 z-0 w-full h-full">
+        <DarkVeil
+          hueShift={0}
+          noiseIntensity={0.05}
+          scanlineIntensity={0.2}
+          speed={0.5}
+          scanlineFrequency={2}
+          warpAmount={0.5}
+        />
+      </div>
+      <Container className="relative z-10 w-full">
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h1
             ref={nameRef}
@@ -57,7 +71,6 @@ export default function Hero() {
             style={{ opacity: 0 }}
           >
             Full stack developer and AI student building scalable web solutions
-            with Next.js, React, Tailwind CSS, and Laravel.
           </p>
 
           <div

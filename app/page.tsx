@@ -1,5 +1,4 @@
 import Script from "next/script";
-import Navbar from "./components/ui/Navbar";
 import Hero from "./components/sections/Hero";
 import About from "./components/sections/About";
 import Skills from "./components/sections/Skills";
@@ -10,10 +9,9 @@ import Footer from "./components/ui/Footer";
 import Guestbook from "./components/sections/Guestbook";
 import PageTransition from "./components/ui/PageTransition";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://example.com").replace(
-  /\/$/,
-  "",
-);
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"
+).replace(/\/$/, "");
 
 const jsonLd = [
   {
@@ -25,7 +23,7 @@ const jsonLd = [
     image: `${siteUrl}/images/Hazem.jpg`,
     jobTitle: "Full Stack Developer",
     description:
-      "Full stack developer and AI student building scalable web solutions with Next.js, React, Tailwind CSS, and Laravel.",
+      "Full stack developer and AI student building scalable web solutions",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Suez",
@@ -85,8 +83,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <PageTransition>
-        <main>
-          <Navbar />
+        <main className="pb-20 md:pb-0">
           <Hero />
           <About />
           <Skills />
