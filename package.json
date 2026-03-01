@@ -1,0 +1,42 @@
+{
+  "name": "myportfolio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "deploy": "deploy.bat",
+    "deploy:unix": "bash ./deploy.sh"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^4.1.0",
+    "@tailwindcss/postcss": "^4.0.17",
+    "@vercel/postgres": "^0.10.0",
+    "emailjs-com": "^3.2.0",
+    "gsap": "^3.14.2",
+    "i18next": "^23.10.0",
+    "lenis": "^1.3.17",
+    "mongodb": "^7.0.0",
+    "next": "15.2.6",
+    "nodemailer": "^7.0.13",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^14.0.5",
+    "react-type-animation": "^3.2.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/node": "^20",
+    "@types/nodemailer": "^7.0.9",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
