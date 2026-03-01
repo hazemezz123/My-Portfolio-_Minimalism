@@ -47,8 +47,6 @@ export async function POST(request: Request) {
       tags: body.tags || [],
       demoUrl: body.demoUrl || undefined,
       codeUrl: body.codeUrl,
-      image: body.image || undefined,
-      photos: body.photos || [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };

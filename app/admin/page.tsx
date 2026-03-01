@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
 interface Project {
@@ -11,8 +10,6 @@ interface Project {
   tags: string[];
   demoUrl?: string;
   codeUrl: string;
-  image?: string;
-  photos?: string[];
 }
 
 interface GuestbookEntry {
@@ -40,8 +37,6 @@ export default function AdminPage() {
     tags: [],
     demoUrl: "",
     codeUrl: "",
-    image: "",
-    photos: [],
   });
   const [tagsInput, setTagsInput] = useState("");
   const [resumeUrl, setResumeUrl] = useState("");
@@ -50,9 +45,6 @@ export default function AdminPage() {
     [],
   );
   const [isLoadingGuestbook, setIsLoadingGuestbook] = useState(false);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedAuth = sessionStorage.getItem("adminAuth");
@@ -176,14 +168,10 @@ export default function AdminPage() {
       tags: [],
       demoUrl: "",
       codeUrl: "",
-      image: "",
-      photos: [],
     });
     setTagsInput("");
     setEditingProject(null);
     setShowForm(false);
-    setSelectedImageFile(null);
-    setImageUploadError(null);
   };
 
   const handleEdit = (project: Project) => {
@@ -191,64 +179,6 @@ export default function AdminPage() {
     setFormData(project);
     setTagsInput(project.tags.join(", "));
     setShowForm(true);
-    setSelectedImageFile(null);
-    setImageUploadError(null);
-  };
-
-  const handleImageUpload = async () => {
-    if (!selectedImageFile) {
-      setImageUploadError("Please select an image first");
-      return;
-    }
-
-    setIsUploadingImage(true);
-    setImageUploadError(null);
-
-    try {
-      const signResponse = await fetch("/api/cloudinary/sign", {
-        method: "POST",
-      });
-
-      if (!signResponse.ok) {
-        throw new Error("Failed to generate upload signature");
-      }
-
-      const { cloudName, apiKey, timestamp, folder, signature } =
-        await signResponse.json();
-
-      const uploadFormData = new FormData();
-      uploadFormData.append("file", selectedImageFile);
-      uploadFormData.append("api_key", apiKey);
-      uploadFormData.append("timestamp", String(timestamp));
-      uploadFormData.append("signature", signature);
-      uploadFormData.append("folder", folder);
-      uploadFormData.append("format", "webp");
-
-      const uploadResponse = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: uploadFormData,
-        },
-      );
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload image to Cloudinary");
-      }
-
-      const uploadData = await uploadResponse.json();
-
-      setFormData((prev) => ({
-        ...prev,
-        image: uploadData.secure_url,
-      }));
-      setSelectedImageFile(null);
-    } catch (err) {
-      setImageUploadError("Image upload failed. Please try again.");
-      console.error(err);
-    } finally {
-      setIsUploadingImage(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -462,155 +392,6 @@ export default function AdminPage() {
                     onChange={handleInputChange}
                     placeholder="https://example.com"
                   />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                  Project Image
-                </label>
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setSelectedImageFile(e.target.files?.[0] || null)
-                      }
-                      className="text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleImageUpload}
-                      disabled={!selectedImageFile || isUploadingImage}
-                      className="px-4 py-2 text-sm font-medium rounded-md border border-neutral-300 text-neutral-900 hover:border-neutral-400 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-600 transition-colors duration-150 ease-out disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {isUploadingImage ? "Uploading..." : "Upload Image"}
-                    </button>
-                  </div>
-
-                  {imageUploadError && (
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      {imageUploadError}
-                    </p>
-                  )}
-
-                  <input
-                    type="text"
-                    name="image"
-                    value={formData.image || ""}
-                    onChange={handleInputChange}
-                    placeholder="https://res.cloudinary.com/..."
-                  />
-
-                  {formData.image && (
-                    <Image
-                      src={formData.image}
-                      alt="Uploaded preview"
-                      width={480}
-                      height={176}
-                      className="w-full max-w-sm h-44 object-cover rounded-md border border-[var(--border)]"
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Multi-Photo Upload */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                  Project Photos (Gallery)
-                </label>
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={async (e) => {
-                        const files = e.target.files;
-                        if (!files || files.length === 0) return;
-                        setIsUploadingImage(true);
-                        setImageUploadError(null);
-                        try {
-                          const newPhotos: string[] = [];
-                          for (let i = 0; i < files.length; i++) {
-                            const signRes = await fetch(
-                              "/api/cloudinary/sign",
-                              { method: "POST" },
-                            );
-                            if (!signRes.ok) throw new Error("Failed to sign");
-                            const {
-                              cloudName,
-                              apiKey,
-                              timestamp,
-                              folder,
-                              signature,
-                            } = await signRes.json();
-                            const fd = new FormData();
-                            fd.append("file", files[i]);
-                            fd.append("api_key", apiKey);
-                            fd.append("timestamp", String(timestamp));
-                            fd.append("signature", signature);
-                            fd.append("folder", folder);
-                            fd.append("format", "webp");
-                            const uploadRes = await fetch(
-                              `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-                              { method: "POST", body: fd },
-                            );
-                            if (!uploadRes.ok) throw new Error("Upload failed");
-                            const data = await uploadRes.json();
-                            newPhotos.push(data.secure_url);
-                          }
-                          setFormData((prev) => ({
-                            ...prev,
-                            photos: [...(prev.photos || []), ...newPhotos],
-                          }));
-                        } catch (err) {
-                          setImageUploadError("Photo upload failed.");
-                          console.error(err);
-                        } finally {
-                          setIsUploadingImage(false);
-                        }
-                      }}
-                      className="text-sm"
-                    />
-                    {isUploadingImage && (
-                      <span className="text-sm text-[var(--muted)] animate-pulse">
-                        Uploading...
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Photos preview */}
-                  {formData.photos && formData.photos.length > 0 && (
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                      {formData.photos.map((photo, idx) => (
-                        <div key={idx} className="relative group">
-                          <Image
-                            src={photo}
-                            alt={`Photo ${idx + 1}`}
-                            width={200}
-                            height={120}
-                            className="w-full h-24 object-cover rounded-md border border-[var(--border)]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                photos:
-                                  prev.photos?.filter((_, i) => i !== idx) ||
-                                  [],
-                              }));
-                            }}
-                            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-red-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
 

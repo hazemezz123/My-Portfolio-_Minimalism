@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { getProjectsCollection } from "../lib/mongodb";
 
@@ -62,44 +61,6 @@ export default async function ProjectsPage() {
                 href={`/projects/${project.id}`}
                 className="group block rounded-xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden transition-all duration-300 hover:border-[var(--muted)] hover:shadow-lg hover:shadow-black/20 hover:-translate-y-1"
               >
-                {/* Thumbnail */}
-                <div className="relative w-full aspect-[16/10] bg-[var(--bg)] overflow-hidden">
-                  {project.image ? (
-                    <Image
-                      src={project.image}
-                      alt={project.title}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-[var(--muted)]">
-                      <svg
-                        width="48"
-                        height="48"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          width="18"
-                          height="18"
-                          x="3"
-                          y="3"
-                          rx="2"
-                          ry="2"
-                        />
-                        <circle cx="9" cy="9" r="2" />
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
                 <div className="p-4 space-y-2">
                   <h2 className="text-base font-medium text-[var(--text)] group-hover:text-white transition-colors">
                     {project.title}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import Container from "../ui/Container";
 import Section from "../ui/Section";
@@ -19,7 +18,6 @@ const fallbackProjects = [
     tags: ["React.js", "JavaScript", "Tailwind CSS"],
     demoUrl: "https://speedyou.vercel.app/",
     codeUrl: "https://github.com/hazemezz123/Economic-Project",
-    image: "/projects/speedyou.webp",
   },
   {
     id: "2",
@@ -29,7 +27,6 @@ const fallbackProjects = [
     tags: ["Next.js", "React", "CSS"],
     demoUrl: "https://dern-company.vercel.app/",
     codeUrl: "https://github.com/hazemezz123/dern-Company",
-    image: "/projects/dern.webp",
   },
   {
     id: "3",
@@ -38,7 +35,6 @@ const fallbackProjects = [
       "A comprehensive API system for managing student tournaments with PHP backend.",
     tags: ["PHP", "MySQL", "REST API"],
     codeUrl: "https://github.com/hazemezz123/API-College-Tournament-Platform",
-    image: "/projects/tournament.webp",
   },
   {
     id: "4",
@@ -47,7 +43,6 @@ const fallbackProjects = [
       "A Python desktop application that efficiently organizes files by type.",
     tags: ["Python", "Desktop App", "GUI"],
     codeUrl: "https://github.com/hazemezz123/H4ck3r_File_Organizer",
-    image: "/projects/h4ck3r.webp",
   },
   {
     id: "5",
@@ -56,7 +51,6 @@ const fallbackProjects = [
       "An interactive Python GUI application that simulates battles between superheroes.",
     tags: ["Python", "OOP", "Tkinter"],
     codeUrl: "https://github.com/hazemezz123/Python-oppSkills",
-    image: "/projects/superhero.webp",
   },
 ];
 
@@ -67,8 +61,6 @@ interface Project {
   tags: string[];
   demoUrl?: string;
   codeUrl: string;
-  image?: string;
-  photos?: string[];
 }
 
 export default function Projects() {

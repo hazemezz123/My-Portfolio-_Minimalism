@@ -2,14 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   eslint: {
-    ignoreDuringBuilds: true, // Disable ESLint checking during build
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // Ignore TypeScript errors during build
-  },
-  images: {
-    domains: ["localhost", "vercel.app", "res.cloudinary.com"],
-    formats: ["image/avif", "image/webp"],
+    ignoreBuildErrors: true,
   },
   experimental: {
     serverActions: {

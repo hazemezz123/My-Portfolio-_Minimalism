@@ -1,9 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectsCollection, ObjectId } from "../../lib/mongodb";
 import Button from "../../components/ui/Button";
-import ProjectGallery from "../../components/ui/ProjectGallery";
 
 interface ProjectDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -24,8 +22,6 @@ export default async function ProjectDetailsPage({
   if (!project) {
     notFound();
   }
-
-  const photos = project.photos || [];
 
   return (
     <main className="min-h-screen pt-24 pb-16 px-6">
@@ -53,20 +49,6 @@ export default async function ProjectDetailsPage({
         </div>
 
         <article className="space-y-8">
-          {/* Hero Image */}
-          {project.image && (
-            <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden bg-[var(--surface)]">
-              <Image
-                src={project.image}
-                alt={`${project.title} screenshot`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 75ch"
-                priority
-              />
-            </div>
-          )}
-
           {/* Title & Description */}
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-[var(--text)] mb-3">
@@ -114,9 +96,6 @@ export default async function ProjectDetailsPage({
               </Button>
             )}
           </div>
-
-          {/* Photo Gallery with Modal */}
-          <ProjectGallery photos={photos} projectTitle={project.title} />
         </article>
       </div>
     </main>
