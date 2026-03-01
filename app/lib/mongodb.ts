@@ -11,6 +11,7 @@ export interface Project {
   demoUrl?: string;
   codeUrl: string;
   image?: string;
+  photos?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

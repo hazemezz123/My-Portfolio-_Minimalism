@@ -1,82 +1,71 @@
 "use client";
 
-import { useState, useRef, memo } from "react";
+import { useRef } from "react";
 import Container from "../ui/Container";
 import Section from "../ui/Section";
 import Heading from "../ui/Heading";
-import Tag from "../ui/Tag";
+import LogoLoop from "../ui/LogoLoop";
 import { useFadeInOnScroll } from "../../hooks/useFadeInOnScroll";
 
-const skillsData: Record<string, string[]> = {
-  Frontend: [
-    "React.js",
-    "Next.js",
-    "TypeScript",
-    "JavaScript",
-    "Tailwind CSS",
-    "HTML5",
-    "CSS3",
-    "GSAP",
-  ],
-  Backend: [
-    "Node.js",
-    "Laravel",
-    "PHP",
-    "Python",
-    "REST APIs",
-    "MongoDB",
-    "MySQL",
-    "PostgreSQL",
-  ],
-  Tools: [
-    "Git",
-    "GitHub",
-    "VS Code",
-    "Vercel",
-    "Figma",
-    "Postman",
-    "Docker",
-    "Linux",
-  ],
-  Other: [
-    "Responsive Design",
-    "SEO",
-    "Testing",
-    "Agile",
-    "UI/UX",
-    "Performance",
-    "Accessibility",
-    "CI/CD",
-  ],
-};
+import {
+  SiReact,
+  SiNextdotjs,
+  SiTypescript,
+  SiJavascript,
+  SiTailwindcss,
+  SiHtml5,
+  SiCss3,
+  SiNodedotjs,
+  SiLaravel,
+  SiPhp,
+  SiPython,
+  SiMongodb,
+  SiMysql,
+  SiPostgresql,
+  SiGit,
+  SiGithub,
+  SiVercel,
+  SiFigma,
+  SiPostman,
+  SiDocker,
+  SiLinux,
+  SiGreensock,
+} from "react-icons/si";
+import { VscCode } from "react-icons/vsc";
 
-const categories = Object.keys(skillsData);
+const frontendLogos = [
+  { node: <SiReact />, title: "React.js" },
+  { node: <SiNextdotjs />, title: "Next.js" },
+  { node: <SiTypescript />, title: "TypeScript" },
+  { node: <SiJavascript />, title: "JavaScript" },
+  { node: <SiTailwindcss />, title: "Tailwind CSS" },
+  { node: <SiHtml5 />, title: "HTML5" },
+  { node: <SiCss3 />, title: "CSS3" },
+  { node: <SiGreensock />, title: "GSAP" },
+];
 
-const CategoryButton = memo(function CategoryButton({
-  name,
-  active,
-  onClick,
-}: {
-  name: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ring-offset)] ${
-        active
-          ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950"
-          : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface)]"
-      }`}
-    >
-      {name}
-    </button>
-  );
-});
+const backendLogos = [
+  { node: <SiNodedotjs />, title: "Node.js" },
+  { node: <SiLaravel />, title: "Laravel" },
+  { node: <SiPhp />, title: "PHP" },
+  { node: <SiPython />, title: "Python" },
+  { node: <SiMongodb />, title: "MongoDB" },
+  { node: <SiMysql />, title: "MySQL" },
+  { node: <SiPostgresql />, title: "PostgreSQL" },
+];
+
+const toolsLogos = [
+  { node: <SiGit />, title: "Git" },
+  { node: <SiGithub />, title: "GitHub" },
+  { node: <VscCode />, title: "VS Code" },
+  { node: <SiVercel />, title: "Vercel" },
+  { node: <SiFigma />, title: "Figma" },
+  { node: <SiPostman />, title: "Postman" },
+  { node: <SiDocker />, title: "Docker" },
+  { node: <SiLinux />, title: "Linux" },
+];
 
 export default function Skills() {
-  const [activeCategory, setActiveCategory] = useState(categories[0]);
   const contentRef = useRef<HTMLDivElement>(null);
   useFadeInOnScroll(contentRef);
 
@@ -86,23 +75,54 @@ export default function Skills() {
         <div ref={contentRef} style={{ opacity: 0 }}>
           <Heading className="mb-12">Skills</Heading>
 
-          <div className="flex flex-wrap gap-2 mb-8">
-            {categories.map((category) => (
-              <CategoryButton
-                key={category}
-                name={category}
-                active={activeCategory === category}
-                onClick={() => setActiveCategory(category)}
+          <div className="space-y-8">
+            {/* Frontend Row — scrolls left */}
+            <div className="relative h-[80px] overflow-hidden">
+              <LogoLoop
+                logos={frontendLogos}
+                speed={80}
+                direction="left"
+                logoHeight={40}
+                gap={60}
+                hoverSpeed={0}
+                scaleOnHover
+                fadeOut
+                fadeOutColor="#0a0a0a"
+                ariaLabel="Frontend skills"
               />
-            ))}
-          </div>
+            </div>
 
-          <div className="flex flex-wrap gap-2">
-            {skillsData[activeCategory].map((skill) => (
-              <Tag key={skill} className="text-sm px-3 py-1.5">
-                {skill}
-              </Tag>
-            ))}
+            {/* Backend Row — scrolls right */}
+            <div className="relative h-[80px] overflow-hidden">
+              <LogoLoop
+                logos={backendLogos}
+                speed={60}
+                direction="right"
+                logoHeight={40}
+                gap={60}
+                hoverSpeed={0}
+                scaleOnHover
+                fadeOut
+                fadeOutColor="#0a0a0a"
+                ariaLabel="Backend skills"
+              />
+            </div>
+
+            {/* Tools Row — scrolls left */}
+            <div className="relative h-[80px] overflow-hidden">
+              <LogoLoop
+                logos={toolsLogos}
+                speed={70}
+                direction="left"
+                logoHeight={40}
+                gap={60}
+                hoverSpeed={0}
+                scaleOnHover
+                fadeOut
+                fadeOutColor="#0a0a0a"
+                ariaLabel="Developer tools"
+              />
+            </div>
           </div>
         </div>
       </Container>

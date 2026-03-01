@@ -2,9 +2,9 @@ import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudName = process.env.CLOUDE_NAME;
+  const apiKey = process.env.API_KEY;
+  const apiSecret = process.env.API_SECRECT;
 
   if (!cloudName || !apiKey || !apiSecret) {
     return NextResponse.json(

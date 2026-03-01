@@ -12,6 +12,7 @@ interface Project {
   demoUrl?: string;
   codeUrl: string;
   image?: string;
+  photos?: string[];
 }
 
 interface GuestbookEntry {
@@ -40,6 +41,7 @@ export default function AdminPage() {
     demoUrl: "",
     codeUrl: "",
     image: "",
+    photos: [],
   });
   const [tagsInput, setTagsInput] = useState("");
   const [resumeUrl, setResumeUrl] = useState("");
@@ -175,6 +177,7 @@ export default function AdminPage() {
       demoUrl: "",
       codeUrl: "",
       image: "",
+      photos: [],
     });
     setTagsInput("");
     setEditingProject(null);
@@ -318,7 +321,9 @@ export default function AdminPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                {error}
+              </p>
             )}
 
             <button
@@ -484,7 +489,9 @@ export default function AdminPage() {
                   </div>
 
                   {imageUploadError && (
-                    <p className="text-sm text-red-600 dark:text-red-400">{imageUploadError}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {imageUploadError}
+                    </p>
                   )}
 
                   <input
@@ -503,6 +510,104 @@ export default function AdminPage() {
                       height={176}
                       className="w-full max-w-sm h-44 object-cover rounded-md border border-[var(--border)]"
                     />
+                  )}
+                </div>
+              </div>
+
+              {/* Multi-Photo Upload */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
+                  Project Photos (Gallery)
+                </label>
+                <div className="space-y-3">
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={async (e) => {
+                        const files = e.target.files;
+                        if (!files || files.length === 0) return;
+                        setIsUploadingImage(true);
+                        setImageUploadError(null);
+                        try {
+                          const newPhotos: string[] = [];
+                          for (let i = 0; i < files.length; i++) {
+                            const signRes = await fetch(
+                              "/api/cloudinary/sign",
+                              { method: "POST" },
+                            );
+                            if (!signRes.ok) throw new Error("Failed to sign");
+                            const {
+                              cloudName,
+                              apiKey,
+                              timestamp,
+                              folder,
+                              signature,
+                            } = await signRes.json();
+                            const fd = new FormData();
+                            fd.append("file", files[i]);
+                            fd.append("api_key", apiKey);
+                            fd.append("timestamp", String(timestamp));
+                            fd.append("signature", signature);
+                            fd.append("folder", folder);
+                            const uploadRes = await fetch(
+                              `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+                              { method: "POST", body: fd },
+                            );
+                            if (!uploadRes.ok) throw new Error("Upload failed");
+                            const data = await uploadRes.json();
+                            newPhotos.push(data.secure_url);
+                          }
+                          setFormData((prev) => ({
+                            ...prev,
+                            photos: [...(prev.photos || []), ...newPhotos],
+                          }));
+                        } catch (err) {
+                          setImageUploadError("Photo upload failed.");
+                          console.error(err);
+                        } finally {
+                          setIsUploadingImage(false);
+                        }
+                      }}
+                      className="text-sm"
+                    />
+                    {isUploadingImage && (
+                      <span className="text-sm text-[var(--muted)] animate-pulse">
+                        Uploading...
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Photos preview */}
+                  {formData.photos && formData.photos.length > 0 && (
+                    <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                      {formData.photos.map((photo, idx) => (
+                        <div key={idx} className="relative group">
+                          <Image
+                            src={photo}
+                            alt={`Photo ${idx + 1}`}
+                            width={200}
+                            height={120}
+                            className="w-full h-24 object-cover rounded-md border border-[var(--border)]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                photos:
+                                  prev.photos?.filter((_, i) => i !== idx) ||
+                                  [],
+                              }));
+                            }}
+                            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-red-600 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

@@ -68,6 +68,7 @@ interface Project {
   demoUrl?: string;
   codeUrl: string;
   image?: string;
+  photos?: string[];
 }
 
 export default function Projects() {
@@ -114,27 +115,24 @@ export default function Projects() {
         <Heading className="mb-12">Projects</Heading>
 
         {isLoading ? (
-            <div className="text-center py-12">
-              <div className="loading-spinner mx-auto" />
-              <p className="mt-4 text-sm text-[var(--muted)]">
-                Loading projects...
-              </p>
-            </div>
+          <div className="text-center py-12">
+            <div className="loading-spinner mx-auto" />
+            <p className="mt-4 text-sm text-[var(--muted)]">
+              Loading projects...
+            </p>
+          </div>
         ) : (
-            <div
-              ref={gridRef}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            >
-              {projects.map((project, index) => (
-                <Card
-                  key={project.id}
-                  ref={(el) => {
-                    if (el) {
-                      cardRefs.current[index] = el;
-                    }
-                  }}
-                  className="opacity-0 translate-y-4 motion-reduce:opacity-100 motion-reduce:translate-y-0 will-change-transform"
-                >
+          <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {projects.map((project, index) => (
+              <Card
+                key={project.id}
+                ref={(el) => {
+                  if (el) {
+                    cardRefs.current[index] = el;
+                  }
+                }}
+                className="opacity-0 translate-y-4 motion-reduce:opacity-100 motion-reduce:translate-y-0 will-change-transform"
+              >
                 {project.image && (
                   <div className="relative w-full aspect-[16/10] overflow-hidden bg-[var(--surface)]">
                     <Image
@@ -197,6 +195,28 @@ export default function Projects() {
           </div>
         )}
       </Container>
+
+      {/* View All link */}
+      <div className="text-center mt-10">
+        <Link
+          href="/projects"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text)] border border-[var(--border)] rounded-full px-6 py-2.5 transition-all duration-300 hover:bg-[var(--surface)] hover:border-[var(--muted)]"
+        >
+          View All Projects
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 4l4 4-4 4" />
+          </svg>
+        </Link>
+      </div>
     </Section>
   );
 }
