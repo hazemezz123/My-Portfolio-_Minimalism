@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { Github, Linkedin, Instagram, Facebook } from "lucide-react";
 import Container from "./Container";
 import { useFadeInOnScroll } from "../../hooks/useFadeInOnScroll";
 
@@ -8,18 +9,22 @@ const socialLinks = [
   {
     name: "GitHub",
     href: "https://github.com/hazemezz123",
+    icon: Github,
   },
   {
     name: "LinkedIn",
     href: "https://www.linkedin.com/in/hazem-ezz-424498285/",
+    icon: Linkedin,
   },
   {
     name: "Instagram",
     href: "https://www.instagram.com/hazem_ezz_1/",
+    icon: Instagram,
   },
   {
     name: "Facebook",
     href: "https://www.facebook.com/profile.php?id=61557867570271",
+    icon: Facebook,
   },
 ];
 
@@ -39,19 +44,22 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} Hazem Ezz
           </p>
 
-          <nav className="flex items-center gap-5">
-            {socialLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-[var(--text)] underline-offset-4 transition-colors duration-150 ease-out hover:underline"
-                aria-label={link.name}
-              >
-                {link.name}
-              </a>
-            ))}
+          <nav className="flex items-center gap-4">
+            {socialLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--muted)] transition-colors duration-150 ease-out hover:text-[var(--text)]"
+                  aria-label={link.name}
+                >
+                  <Icon size={20} />
+                </a>
+              );
+            })}
           </nav>
         </div>
       </Container>

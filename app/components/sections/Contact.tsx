@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { Mail, Linkedin, Github } from "lucide-react";
 import Container from "../ui/Container";
 import Section from "../ui/Section";
 import Heading from "../ui/Heading";
@@ -57,28 +58,31 @@ export default function Contact() {
             Have a project in mind or want to collaborate? Send me a message.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-[var(--text)] mb-10">
+          <div className="flex justify-center gap-5 mb-10">
             <a
               href="mailto:hazemezz988@gmail.com"
-              className="underline-offset-4 transition-colors duration-150 ease-out hover:underline"
+              className="text-[var(--muted)] transition-colors duration-150 ease-out hover:text-[var(--text)]"
+              aria-label="Email"
             >
-              hazemezz988@gmail.com
+              <Mail size={22} />
             </a>
             <a
               href="https://www.linkedin.com/in/hazem-ezz-424498285/"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4 transition-colors duration-150 ease-out hover:underline"
+              className="text-[var(--muted)] transition-colors duration-150 ease-out hover:text-[var(--text)]"
+              aria-label="LinkedIn"
             >
-              LinkedIn
+              <Linkedin size={22} />
             </a>
             <a
               href="https://github.com/hazemezz123"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4 transition-colors duration-150 ease-out hover:underline"
+              className="text-[var(--muted)] transition-colors duration-150 ease-out hover:text-[var(--text)]"
+              aria-label="GitHub"
             >
-              GitHub
+              <Github size={22} />
             </a>
           </div>
 
