@@ -74,7 +74,7 @@ export default function Projects() {
     cardRefs.current.length = projects.length;
   }
 
-  useProjectsReveal(cardRefs, gridRef);
+  useProjectsReveal(cardRefs, gridRef, !isLoading);
 
   useEffect(() => {
     const fetchProjects = async () => {

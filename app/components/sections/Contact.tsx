@@ -14,7 +14,7 @@ export default function Contact() {
   const contentRef = useRef<HTMLDivElement>(null);
   useFadeInOnScroll(contentRef);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setStatus("idle");

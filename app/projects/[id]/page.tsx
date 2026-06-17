@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProjectsCollection, ObjectId } from "../../lib/mongodb";
-import Button from "../../components/ui/Button";
+import { getDb } from "@/lib/db";
+import Button from "@/app/components/ui/Button";
+import type { Project } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -9,24 +10,53 @@ interface ProjectDetailsPageProps {
   params: Promise<{ id: string }>;
 }
 
+function rowToProject(row: Record<string, unknown>): Project {
+  const tags = (() => {
+    try {
+      return JSON.parse((row.tags as string) || "[]") as string[];
+    } catch {
+      return [];
+    }
+  })();
+
+  return {
+    id: row.id as number,
+    title: row.title as string,
+    description: row.description as string,
+    tags,
+    demoUrl: (row.demo_url as string) || undefined,
+    codeUrl: (row.code_url as string) || "",
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
 export default async function ProjectDetailsPage({
   params,
 }: ProjectDetailsPageProps) {
   const { id } = await params;
+  const numericId = Number(id);
 
-  if (!ObjectId.isValid(id)) {
+  if (!numericId || Number.isNaN(numericId)) {
     notFound();
   }
 
-  const collection = await getProjectsCollection();
-  const project = await collection.findOne({ _id: new ObjectId(id) });
+  const db = await getDb();
+  const result = await db.execute({
+    sql: "SELECT * FROM projects WHERE id = ?",
+    args: [numericId],
+  });
 
-  if (!project) {
+  if (result.rows.length === 0) {
     notFound();
   }
+
+  const project = rowToProject(
+    result.rows[0] as unknown as Record<string, unknown>,
+  );
 
   return (
-    <main className="min-h-screen pt-24 pb-16 px-6">
+    <main id="main-content" className="min-h-screen pt-24 pb-16 px-6">
       <div className="mx-auto max-w-[75ch]">
         {/* Navigation */}
         <div className="flex items-center gap-4 mb-8">

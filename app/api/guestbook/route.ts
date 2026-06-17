@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getGuestbookCollection, type GuestbookEntry } from "../../lib/mongodb";
+import { getDb } from "@/lib/db";
+import { checkAdminAuth } from "@/lib/auth";
+import type { GuestbookEntry } from "@/lib/types";
 
 const COOLDOWN_MS = 30_000;
 const MAX_NAME_LENGTH = 40;
@@ -34,7 +36,10 @@ function normalizeText(value: unknown) {
 
 function getRequesterKey(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for") || "";
-  const ip = forwardedFor.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "";
+  const ip =
+    forwardedFor.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "";
   const ua = request.headers.get("user-agent") || "";
   return ip || ua;
 }
@@ -62,27 +67,40 @@ function isRateLimited(key: string) {
   return false;
 }
 
-function toResponseEntry(entry: GuestbookEntry & { _id?: { toString(): string } }) {
+function rowToEntry(row: Record<string, unknown>): GuestbookEntry {
   return {
-    id: entry._id?.toString() || "",
+    id: row.id as number,
+    name: row.name as string,
+    message: row.message as string,
+    website: (row.website as string) || undefined,
+    social: (row.social as string) || undefined,
+    createdAt: row.created_at as string,
+  };
+}
+
+function toResponseEntry(entry: GuestbookEntry) {
+  return {
+    id: entry.id,
     name: escapeHtml(entry.name),
     message: escapeHtml(entry.message),
     website: entry.website ? escapeHtml(entry.website) : "",
     social: entry.social ? escapeHtml(entry.social) : "",
-    createdAt: (entry.createdAt || new Date()).toISOString(),
+    createdAt: new Date(entry.createdAt || Date.now()).toISOString(),
   };
 }
 
 export async function GET() {
   try {
-    const collection = await getGuestbookCollection();
-    const entries = await collection
-      .find({})
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .toArray();
+    const db = await getDb();
+    const result = await db.execute(
+      "SELECT * FROM guestbook ORDER BY created_at DESC LIMIT 50",
+    );
 
-    return NextResponse.json(entries.map((entry) => toResponseEntry(entry)));
+    const entries = result.rows.map((row) =>
+      toResponseEntry(rowToEntry(row as unknown as Record<string, unknown>)),
+    );
+
+    return NextResponse.json(entries);
   } catch (error) {
     console.error("Error fetching guestbook entries:", error);
     return NextResponse.json(
@@ -97,7 +115,10 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     if (normalizeText(body?.company || body?.websiteHp)) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid request" },
+        { status: 400 },
+      );
     }
 
     const name = normalizeText(body?.name);
@@ -112,7 +133,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (name.length > MAX_NAME_LENGTH || message.length > MAX_MESSAGE_LENGTH) {
+    if (
+      name.length > MAX_NAME_LENGTH ||
+      message.length > MAX_MESSAGE_LENGTH
+    ) {
       return NextResponse.json(
         {
           error: `Name must be <= ${MAX_NAME_LENGTH} chars and message <= ${MAX_MESSAGE_LENGTH} chars`,
@@ -136,25 +160,66 @@ export async function POST(request: Request) {
       );
     }
 
-    const entry: GuestbookEntry = {
-      name,
-      message,
-      website: website || undefined,
-      social: social || undefined,
-      createdAt: new Date(),
-    };
+    const db = await getDb();
+    const result = await db.execute({
+      sql: `INSERT INTO guestbook (name, message, website, social) VALUES (?, ?, ?, ?)`,
+      args: [name, message, website || null, social || null],
+    });
 
-    const collection = await getGuestbookCollection();
-    const result = await collection.insertOne(entry);
+    const id = Number(result.lastInsertRowid);
 
     return NextResponse.json(
-      toResponseEntry({ ...entry, _id: result.insertedId }),
+      toResponseEntry({
+        id,
+        name,
+        message,
+        website: website || undefined,
+        social: social || undefined,
+        createdAt: new Date().toISOString(),
+      }),
       { status: 201 },
     );
   } catch (error) {
     console.error("Error creating guestbook entry:", error);
     return NextResponse.json(
       { error: "Failed to create guestbook entry" },
+      { status: 500 },
+    );
+  }
+}
+
+/** DELETE — admin only: remove a guestbook entry by id. */
+export async function DELETE(request: Request) {
+  if (!(await checkAdminAuth())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Entry ID is required" },
+        { status: 400 },
+      );
+    }
+
+    const db = await getDb();
+    const result = await db.execute({
+      sql: "DELETE FROM guestbook WHERE id = ?",
+      args: [Number(id)],
+    });
+
+    if (result.rowsAffected === 0) {
+      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting guestbook entry:", error);
+    return NextResponse.json(
+      { error: "Failed to delete guestbook entry" },
       { status: 500 },
     );
   }

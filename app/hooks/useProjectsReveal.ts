@@ -3,11 +3,22 @@
 import { useLayoutEffect, type MutableRefObject, type RefObject } from "react";
 import { gsap, ScrollTrigger } from "../lib/gsap";
 
+/**
+ * Staggered reveal animation for the project cards grid.
+ *
+ * @param refs       Mutable ref array pointing to each card DOM element
+ * @param triggerRef Ref to the grid wrapper that acts as the scroll trigger
+ * @param ready      Pass `!isLoading` so the effect re-runs when cards
+ *                   actually appear in the DOM after the fetch completes.
+ */
 export function useProjectsReveal(
   refs: MutableRefObject<HTMLDivElement[]>,
   triggerRef: RefObject<HTMLDivElement | null>,
+  ready: boolean,
 ) {
   useLayoutEffect(() => {
+    if (!ready) return;
+
     const triggerEl = triggerRef.current;
     const cards = refs.current.filter(Boolean);
 
@@ -48,5 +59,5 @@ export function useProjectsReveal(
     return () => {
       ctx.revert();
     };
-  });
+  }, [refs, triggerRef, ready]);
 }

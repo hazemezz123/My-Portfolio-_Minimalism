@@ -96,6 +96,7 @@ export default function DarkVeil({
   resolutionScale = 1,
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     const canvas = ref.current as HTMLCanvasElement;
     const parent = canvas.parentElement as HTMLElement;
@@ -136,8 +137,13 @@ export default function DarkVeil({
 
     const start = performance.now();
     let frame = 0;
+    let isVisible = true;
 
     const loop = () => {
+      if (!isVisible) {
+        frame = requestAnimationFrame(loop);
+        return;
+      }
       program.uniforms.uTime.value =
         ((performance.now() - start) / 1000) * speed;
       program.uniforms.uHueShift.value = hueShift;
@@ -151,19 +157,24 @@ export default function DarkVeil({
 
     loop();
 
+    // Pause rendering when canvas is off-screen
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+      },
+      { threshold: 0 },
+    );
+    observer.observe(canvas);
+
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
+      observer.disconnect();
     };
-  }, [
-    hueShift,
-    noiseIntensity,
-    scanlineIntensity,
-    speed,
-    scanlineFrequency,
-    warpAmount,
-    resolutionScale,
-  ]);
+    // Only re-init WebGL when structural props change; uniforms are
+    // updated every frame so visual prop changes don't need a restart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolutionScale]);
 
   return <canvas ref={ref} className="darkveil-canvas" />;
 }

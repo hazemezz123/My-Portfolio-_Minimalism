@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import ConfirmModal from "@/app/components/ui/ConfirmModal";
+import TagInput from "@/app/components/ui/TagInput";
 
 interface Project {
-  id?: string;
+  id?: number;
   title: string;
   description: string;
   tags: string[];
@@ -13,15 +15,13 @@ interface Project {
 }
 
 interface GuestbookEntry {
-  id: string;
+  id: number;
   name: string;
   message: string;
   website?: string;
   social?: string;
   createdAt: string;
 }
-
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -38,30 +38,34 @@ export default function AdminPage() {
     demoUrl: "",
     codeUrl: "",
   });
-  const [tagsInput, setTagsInput] = useState("");
   const [resumeUrl, setResumeUrl] = useState("");
   const [isResumeLoading, setIsResumeLoading] = useState(false);
-  const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntry[]>(
-    [],
-  );
+  const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntry[]>([]);
   const [isLoadingGuestbook, setIsLoadingGuestbook] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ open: false, title: "", message: "", onConfirm: () => {} });
 
+  // Check existing session on mount via server-side verification
   useEffect(() => {
-    const storedAuth = sessionStorage.getItem("adminAuth");
-    if (storedAuth === "true") {
-      setIsAuthenticated(true);
-    }
+    fetch("/api/auth/verify", { credentials: "same-origin" })
+      .then((res) => res.json())
+      .then((data) => {
+        setIsAuthenticated(!!data.authenticated);
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+      })
+      .finally(() => {
+        setIsCheckingAuth(false);
+      });
   }, []);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchProjects();
-      fetchResumeConfig();
-      fetchGuestbook();
-    }
-  }, [isAuthenticated]);
-
-  const fetchResumeConfig = async () => {
+  const fetchResumeConfig = useCallback(async () => {
     try {
       const response = await fetch("/api/config/resume");
       if (response.ok) {
@@ -71,45 +75,9 @@ export default function AdminPage() {
     } catch (err) {
       console.error("Failed to fetch resume config:", err);
     }
-  };
+  }, []);
 
-  const handleResumeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsResumeLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/config/resume", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: resumeUrl }),
-      });
-
-      if (!response.ok) throw new Error("Failed to update resume URL");
-      alert("Resume link updated successfully!");
-    } catch (err) {
-      setError("Failed to update resume link");
-      console.error(err);
-    } finally {
-      setIsResumeLoading(false);
-    }
-  };
-
-  const fetchGuestbook = async () => {
-    setIsLoadingGuestbook(true);
-    try {
-      const response = await fetch("/api/guestbook");
-      if (!response.ok) throw new Error("Failed to fetch guestbook entries");
-      const data = await response.json();
-      setGuestbookEntries(data);
-    } catch (err) {
-      console.error("Failed to load guestbook:", err);
-    } finally {
-      setIsLoadingGuestbook(false);
-    }
-  };
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -123,22 +91,89 @@ export default function AdminPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const fetchGuestbook = useCallback(async () => {
+    setIsLoadingGuestbook(true);
+    try {
+      const response = await fetch("/api/guestbook");
+      if (!response.ok) throw new Error("Failed to fetch guestbook entries");
+      const data = await response.json();
+      setGuestbookEntries(data);
+    } catch (err) {
+      console.error("Failed to load guestbook:", err);
+    } finally {
+      setIsLoadingGuestbook(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProjects();
+      fetchResumeConfig();
+      fetchGuestbook();
+    }
+  }, [isAuthenticated, fetchProjects, fetchResumeConfig, fetchGuestbook]);
+
+  const handleResumeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("adminAuth", "true");
-      setPassword("");
-    } else {
-      setError("Invalid password");
+    setIsResumeLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/config/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ url: resumeUrl }),
+      });
+
+      if (response.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
+      if (!response.ok) throw new Error("Failed to update resume URL");
+      alert("Resume link updated successfully!");
+    } catch (err) {
+      setError("Failed to update resume link");
+      console.error(err);
+    } finally {
+      setIsResumeLoading(false);
     }
   };
 
-  const handleLogout = () => {
+  // Server-side login — password never touches the client
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        setError("Invalid password");
+        return;
+      }
+
+      setIsAuthenticated(true);
+      setPassword("");
+    } catch {
+      setError("Login failed. Please try again.");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/login", { method: "DELETE", credentials: "same-origin" });
+    } catch {
+      // Ignore network errors — clear local state regardless
+    }
     setIsAuthenticated(false);
-    sessionStorage.removeItem("adminAuth");
   };
 
   const handleInputChange = (
@@ -150,17 +185,6 @@ export default function AdminPage() {
     });
   };
 
-  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTagsInput(e.target.value);
-    setFormData({
-      ...formData,
-      tags: e.target.value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    });
-  };
-
   const resetForm = () => {
     setFormData({
       title: "",
@@ -169,7 +193,6 @@ export default function AdminPage() {
       demoUrl: "",
       codeUrl: "",
     });
-    setTagsInput("");
     setEditingProject(null);
     setShowForm(false);
   };
@@ -177,7 +200,6 @@ export default function AdminPage() {
   const handleEdit = (project: Project) => {
     setEditingProject(project);
     setFormData(project);
-    setTagsInput(project.tags.join(", "));
     setShowForm(true);
   };
 
@@ -195,9 +217,14 @@ export default function AdminPage() {
       const response = await fetch("/api/projects", {
         method,
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify(body),
       });
 
+      if (response.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       if (!response.ok) throw new Error("Failed to save project");
 
       await fetchProjects();
@@ -210,24 +237,77 @@ export default function AdminPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
+  const handleDelete = async (id: number) => {
+    setDeleteModal({
+      open: true,
+      title: "Delete Project",
+      message: "Are you sure you want to delete this project? This action cannot be undone.",
+      onConfirm: async () => {
+        setDeleteModal((prev) => ({ ...prev, open: false }));
+        setIsLoading(true);
+        try {
+          const response = await fetch(`/api/projects?id=${id}`, {
+            method: "DELETE",
+            credentials: "same-origin",
+          });
 
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/projects?id=${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete project");
-      await fetchProjects();
-    } catch (err) {
-      setError("Failed to delete project");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+          if (response.status === 401) {
+            setIsAuthenticated(false);
+            return;
+          }
+          if (!response.ok) throw new Error("Failed to delete project");
+          await fetchProjects();
+        } catch (err) {
+          setError("Failed to delete project");
+          console.error(err);
+        } finally {
+          setIsLoading(false);
+        }
+      },
+    });
   };
+
+  const handleDeleteGuestbookEntry = async (id: number) => {
+    setDeleteModal({
+      open: true,
+      title: "Delete Entry",
+      message: "Delete this guestbook entry? This action cannot be undone.",
+      onConfirm: async () => {
+        setDeleteModal((prev) => ({ ...prev, open: false }));
+        try {
+          const response = await fetch(`/api/guestbook?id=${id}`, {
+            method: "DELETE",
+            credentials: "same-origin",
+          });
+
+          if (response.status === 401) {
+            setIsAuthenticated(false);
+            return;
+          }
+          if (!response.ok) throw new Error("Failed to delete entry");
+          setGuestbookEntries((prev) => prev.filter((e) => e.id !== id));
+        } catch (err) {
+          console.error("Failed to delete guestbook entry:", err);
+        }
+      },
+    });
+  };
+
+  // All unique tags from existing projects (for autocomplete suggestions)
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    projects.forEach((p) => p.tags.forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [projects]);
+
+  // Loading state while checking existing session
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] text-[var(--text)]">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
 
   // Login screen
   if (!isAuthenticated) {
@@ -372,13 +452,15 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text)] mb-1.5">
-                    Tags (comma-separated)
+                    Tags
                   </label>
-                  <input
-                    type="text"
-                    value={tagsInput}
-                    onChange={handleTagsChange}
-                    placeholder="React.js, JavaScript, CSS..."
+                  <TagInput
+                    tags={formData.tags}
+                    onChange={(newTags) =>
+                      setFormData({ ...formData, tags: newTags })
+                    }
+                    suggestions={allTags}
+                    placeholder="Type a tag and press Enter..."
                   />
                 </div>
                 <div>
@@ -494,6 +576,12 @@ export default function AdminPage() {
                         {new Date(entry.createdAt).toLocaleString()}
                       </p>
                     </div>
+                    <button
+                      onClick={() => handleDeleteGuestbookEntry(entry.id)}
+                      className="text-xs text-[var(--muted)] hover:text-red-600 dark:hover:text-red-400 transition-colors shrink-0"
+                    >
+                      Delete
+                    </button>
                   </div>
                 ))}
               </div>
@@ -588,6 +676,14 @@ export default function AdminPage() {
           Portfolio Admin &middot; &copy; {new Date().getFullYear()}
         </p>
       </div>
+
+      <ConfirmModal
+        open={deleteModal.open}
+        title={deleteModal.title}
+        message={deleteModal.message}
+        onConfirm={deleteModal.onConfirm}
+        onCancel={() => setDeleteModal((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

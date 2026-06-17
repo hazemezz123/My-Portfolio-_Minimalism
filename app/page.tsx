@@ -8,22 +8,18 @@ import Contact from "./components/sections/Contact";
 import Footer from "./components/ui/Footer";
 import Guestbook from "./components/sections/Guestbook";
 import PageTransition from "./components/ui/PageTransition";
-
-const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"
-).replace(/\/$/, "");
+import { SITE_URL, SITE_DESCRIPTION } from "@/lib/site-config";
 
 const jsonLd = [
   {
     "@context": "https://schema.org",
     "@type": "Person",
-    "@id": `${siteUrl}/#person`,
+    "@id": `${SITE_URL}/#person`,
     name: "Hazem Ezz",
-    url: siteUrl,
-    image: `${siteUrl}/images/Hazem.jpg`,
+    url: SITE_URL,
+    image: `${SITE_URL}/images/Hazem.jpg`,
     jobTitle: "Full Stack Developer",
-    description:
-      "Full stack developer and AI student building scalable web solutions",
+    description: SITE_DESCRIPTION,
     address: {
       "@type": "PostalAddress",
       addressLocality: "Suez",
@@ -53,24 +49,22 @@ const jsonLd = [
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${siteUrl}/#website`,
+    "@id": `${SITE_URL}/#website`,
     name: "Hazem Ezz Portfolio",
-    url: siteUrl,
+    url: SITE_URL,
     inLanguage: "en",
-    description:
-      "Full stack developer and AI student building scalable web solutions with Next.js, React, Tailwind CSS, and Laravel.",
+    description: SITE_DESCRIPTION,
   },
   {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "@id": `${siteUrl}/#webpage`,
-    url: siteUrl,
+    "@id": `${SITE_URL}/#webpage`,
+    url: SITE_URL,
     name: "Hazem Ezz | Full Stack Developer",
-    isPartOf: { "@id": `${siteUrl}/#website` },
-    about: { "@id": `${siteUrl}/#person` },
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    about: { "@id": `${SITE_URL}/#person` },
     inLanguage: "en",
-    description:
-      "Full stack developer and AI student building scalable web solutions with Next.js, React, Tailwind CSS, and Laravel.",
+    description: SITE_DESCRIPTION,
   },
 ];
 
@@ -83,7 +77,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <PageTransition>
-        <main className="pb-20 md:pb-0">
+        <main id="main-content" className="pb-20 md:pb-0">
           <Hero />
           <About />
           <Skills />

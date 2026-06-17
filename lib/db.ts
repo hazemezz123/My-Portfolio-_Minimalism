@@ -1,41 +1,77 @@
-import { MongoClient, type Db } from "mongodb";
+import { createClient, type Client } from "@libsql/client";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-const MONGODB_DB = process.env.MONGODB_DB || "portfolio";
-
-type GlobalMongoCache = {
-  client: MongoClient | null;
-  promise: Promise<MongoClient> | null;
+const globalForDb = globalThis as typeof globalThis & {
+  _db?: Client;
+  _schemaReady?: Promise<void>;
 };
 
-const globalForMongo = globalThis as typeof globalThis & {
-  _mongo?: GlobalMongoCache;
-};
-
-const cache = globalForMongo._mongo || { client: null, promise: null };
-
-if (!globalForMongo._mongo) {
-  globalForMongo._mongo = cache;
+function getDbUrl(): string {
+  const url = process.env.TURSO_DATABASE_URL;
+  if (!url) {
+    throw new Error("Missing required environment variable: TURSO_DATABASE_URL");
+  }
+  return url;
 }
 
-export async function getMongoClient(): Promise<MongoClient> {
-  if (!MONGODB_URI) {
-    throw new Error("Missing required environment variable: MONGODB_URI");
+/** Returns the singleton database client (synchronous). */
+function getClient(): Client {
+  if (!globalForDb._db) {
+    const url = getDbUrl();
+    globalForDb._db = createClient({
+      url,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
   }
-
-  if (cache.client) {
-    return cache.client;
-  }
-
-  if (!cache.promise) {
-    cache.promise = new MongoClient(MONGODB_URI as string).connect();
-  }
-
-  cache.client = await cache.promise;
-  return cache.client;
+  return globalForDb._db;
 }
 
-export async function getDb(): Promise<Db> {
-  const client = await getMongoClient();
-  return client.db(MONGODB_DB);
+/** Creates tables if they don't exist (idempotent). */
+function initSchema(): Promise<void> {
+  if (!globalForDb._schemaReady) {
+    const db = getClient();
+    globalForDb._schemaReady = db
+      .executeMultiple(`
+        CREATE TABLE IF NOT EXISTS projects (
+          id          INTEGER PRIMARY KEY AUTOINCREMENT,
+          title       TEXT    NOT NULL,
+          description TEXT    NOT NULL,
+          tags        TEXT    DEFAULT '[]',
+          demo_url    TEXT,
+          code_url    TEXT    NOT NULL DEFAULT '',
+          created_at  TEXT    DEFAULT (datetime('now')),
+          updated_at  TEXT    DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS guestbook (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          name       TEXT    NOT NULL,
+          message    TEXT    NOT NULL,
+          website    TEXT,
+          social     TEXT,
+          created_at TEXT    DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS site_config (
+          key        TEXT    PRIMARY KEY,
+          value      TEXT    NOT NULL,
+          updated_at TEXT    DEFAULT (datetime('now'))
+        );
+      `)
+      .then(() => {})
+      .catch((err) => {
+        // Reset so next call can retry
+        globalForDb._schemaReady = undefined;
+        throw err;
+      });
+  }
+  return globalForDb._schemaReady;
+}
+
+/**
+ * Returns the DB client after ensuring the schema is ready.
+ * Always `await` this in API routes: `const db = await getDb();`
+ */
+export async function getDb(): Promise<Client> {
+  await initSchema();
+  return getClient();
 }

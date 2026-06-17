@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Home,
   User,
@@ -24,40 +24,54 @@ const navItems = [
 
 export default function Navbar() {
   const [activeItem, setActiveItem] = useState("#home");
+  // Store section element refs to avoid per-frame DOM queries
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
 
-  // Track which section is in view via ScrollTrigger-compatible polling
+  // Track active section using IntersectionObserver (GPU-accelerated, no layout thrashing)
   useEffect(() => {
-    // Small delay to ensure ScrollSmoother is initialized
-    const timeout = setTimeout(() => {
-      const sectionIds = navItems.map((item) => item.href.replace("#", ""));
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
-      const checkActive = () => {
-        const smoother = ScrollSmoother.get();
-        const scrollY = smoother ? smoother.scrollTop() : window.scrollY;
-        const viewportMiddle = scrollY + window.innerHeight / 2;
+    const sectionIds = navItems.map((item) => item.href.replace("#", ""));
 
-        let currentSection = "#home";
-        for (const id of sectionIds) {
-          const el = document.getElementById(id);
-          if (el) {
-            const top = el.offsetTop;
-            if (top <= viewportMiddle) {
-              currentSection = `#${id}`;
-            }
+    // Cache DOM references once
+    const map = new Map<string, HTMLElement>();
+    for (const id of sectionIds) {
+      const el = document.getElementById(id);
+      if (el) map.set(id, el);
+    }
+    sectionRefs.current = map;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the topmost visible section
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveItem(`#${entry.target.id}`);
+            break;
           }
         }
-        setActiveItem(currentSection);
-      };
+      },
+      {
+        // Observe when section enters the middle 60% of the viewport
+        rootMargin: "-20% 0px -40% 0px",
+        threshold: 0,
+      },
+    );
 
-      // Use GSAP ticker for smooth, frame-synced updates
-      gsap.ticker.add(checkActive);
+    // Small delay to let the DOM settle after initial render
+    const timeout = setTimeout(() => {
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el);
+      }
+    }, prefersReducedMotion ? 0 : 500);
 
-      return () => {
-        gsap.ticker.remove(checkActive);
-      };
-    }, 500);
-
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      observer.disconnect();
+    };
   }, []);
 
   // Scroll to section using GSAP ScrollSmoother
@@ -67,10 +81,8 @@ export default function Navbar() {
 
       const smoother = ScrollSmoother.get();
       if (smoother) {
-        // Use ScrollSmoother's built-in scrollTo — works perfectly with normalizeScroll
         smoother.scrollTo(href, true, "top top");
       } else {
-        // Fallback: use GSAP ScrollToPlugin for non-smooth-scroll environments
         const target = document.querySelector(href);
         if (target) {
           gsap.to(window, {

@@ -4,6 +4,7 @@ import "./globals.css";
 import SmoothScrollProvider from "./components/providers/SmoothScrollProvider";
 import ThemeProvider from "./components/providers/ThemeProvider";
 import Navbar from "./components/ui/Navbar";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,9 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"
-).replace(/\/$/, "");
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -25,9 +24,8 @@ export const metadata: Metadata = {
     default: "Hazem Ezz | Full Stack Developer",
     template: "%s | Hazem Ezz",
   },
-  description:
-    "Full stack developer and AI student building scalable web solutions ",
-  applicationName: "Hazem Ezz Portfolio",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   authors: [{ name: "Hazem Ezz" }],
   creator: "Hazem Ezz",
   keywords: [
@@ -49,12 +47,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  openGraph: {
-    title: "Hazem Ezz | Full Stack Developer",
-    description:
-      "Full stack developer and AI student building scalable web solutions with Next.js, React, Tailwind CSS, and Laravel.",
-    url: "/",
-    siteName: "Hazem Ezz Portfolio",
+    openGraph: {
+      title: "Hazem Ezz | Full Stack Developer",
+      description: SITE_DESCRIPTION,
+      url: "/",
+      siteName: SITE_NAME,
     locale: "en_US",
     type: "website",
     images: [
@@ -67,8 +64,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Hazem Ezz | Full Stack Developer",
-    description:
-      "Full stack developer and AI student building scalable web solutions with Next.js, React, Tailwind CSS, and Laravel.",
+    description: SITE_DESCRIPTION,
     images: ["/images/Hazem.jpg"],
   },
   robots: {
@@ -96,7 +92,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[var(--bg)] font-sans text-[var(--text)] antialiased`}
         suppressHydrationWarning
       >
+        <noscript>
+          <style>{`
+            /* Show all GSAP-animated sections when JS is disabled */
+            [style*="opacity: 0"] { opacity: 1 !important; transform: none !important; }
+            /* Hide loading spinners */
+            .loading-spinner { display: none !important; }
+          `}</style>
+        </noscript>
         <ThemeProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-[var(--text)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--bg)]"
+          >
+            Skip to content
+          </a>
           <Navbar />
           <SmoothScrollProvider>{children}</SmoothScrollProvider>
         </ThemeProvider>

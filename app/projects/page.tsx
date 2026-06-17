@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getProjectsCollection } from "../lib/mongodb";
+import { getDb } from "@/lib/db";
+import type { Project } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -8,18 +9,39 @@ export const metadata = {
   description: "All projects by Hazem Ezz — full stack developer.",
 };
 
-export default async function ProjectsPage() {
-  const collection = await getProjectsCollection();
-  const projects = await collection.find({}).sort({ createdAt: -1 }).toArray();
+function rowToProject(row: Record<string, unknown>): Project {
+  const tags = (() => {
+    try {
+      return JSON.parse((row.tags as string) || "[]") as string[];
+    } catch {
+      return [];
+    }
+  })();
 
-  const formatted = projects.map((p) => ({
-    ...p,
-    id: p._id?.toString(),
-    _id: undefined,
-  }));
+  return {
+    id: row.id as number,
+    title: row.title as string,
+    description: row.description as string,
+    tags,
+    demoUrl: (row.demo_url as string) || undefined,
+    codeUrl: (row.code_url as string) || "",
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export default async function ProjectsPage() {
+  const db = await getDb();
+  const result = await db.execute(
+    "SELECT * FROM projects ORDER BY created_at DESC",
+  );
+
+  const projects = result.rows.map((row) =>
+    rowToProject(row as unknown as Record<string, unknown>),
+  );
 
   return (
-    <main className="min-h-screen pt-24 pb-16 px-6">
+    <main id="main-content" className="min-h-screen pt-24 pb-16 px-6">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
         <div className="mb-12">
@@ -51,13 +73,13 @@ export default async function ProjectsPage() {
         </div>
 
         {/* Projects Grid */}
-        {formatted.length === 0 ? (
+        {projects.length === 0 ? (
           <p className="text-center text-[var(--muted)] py-20">
             No projects yet.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {formatted.map((project) => (
+            {projects.map((project) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
